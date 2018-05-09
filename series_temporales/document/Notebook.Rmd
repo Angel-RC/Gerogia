@@ -1,0 +1,32 @@
+---
+title: "R Notebook"
+output: pdf_document
+---
+Variables: 
+ 
+- Index.1 = datos no estacionados y no ajustados al numero de dias trabajados
+- Index.2 = datos estacionales, pero no ajustados al numero de dias trabajados
+- Index.3 = datos no estacionados, pero ajustados al numero de dias trabajados
+
+```{r,data e index,eval=TRUE}
+
+data <- read_excel("../Data/data.xlsx", sheet = "Hoja1")
+
+data=ts(data[,3:9],start=c(2006,1),freq=4)
+
+plot(data[,c(1,4,7)],
+     xlab = "Meses",
+     main = "Index")
+
+abline(v=2006:2017,lwd=.7,lty=2,col="Red")
+
+```
+
+Se ve una clara estacionalidad para los datos de index 1 e index 3 (los datos no estacionados).
+Entre 2011 y 2012 comenzo un decrecimiento
+
+```{r,anual}
+data.anual <- aggregate(data,FUN=sum)
+```
+
+
