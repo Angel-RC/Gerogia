@@ -44,9 +44,21 @@ boxplot((data[,7]-mean(data[,7]))~cycle(data[,7]),
         xlab="Mes",
         ylab="Index 3")
 
+
+# Numericamente. 
+
+# Si es aditiva
+tapply(data[,1]-mean(data[,1]),cycle(data[,1]),mean)
+
+# Si es multiplicativa
+dat <- log(data[,1])
+tapply(dat-mean(dat),cycle(dat),mean)
+
+
 # En los datos no estacionarios se ve una tendencia creciente, en el index 2 , son similares (lo cual es logico). Se ve que una tendencia creciente a los largo de un año, alcanzando en el ultimo cuarto los valores maximos
 
 # Ahora veremos como evoluciona la media en lugar de la mediana
+
 
 data.1.q <- tapply(data[,1], cycle(data[,1]), mean)
 data.2.q <- tapply(data[,4], cycle(data[,4]), mean)
@@ -72,8 +84,8 @@ plot(data.3.q,
 
 # Veremos si se trata de una serie multiplicativa o no
 
-data.anual <- as.numeric(aggregate(data[,1],FUN=sum))
-data.sd <- as.numeric(aggregate(data[,1],FUN=sd))
+data.anual <- as.numeric(aggregate(data[,4],FUN=sum))
+data.sd <- as.numeric(aggregate(data[,4],FUN=sd))
 
 plot(data.anual,data.sd,
      col = "Red",
@@ -84,19 +96,34 @@ abline(lm(data.sd~data.anual),
        ylab = "Desv. Tipica",
        xlab = "Años")
 
-# Creo que sera multiplicativa porque son indices, pero....  ¯\_(ツ)_/¯
+# diria que sera multiplicativa porque son indices, pero ...  ¯\_(ツ)_/¯   ... suspicius
 
-datos.descom=decompose(data[,1], type="multiplicative")
+datos.descom=decompose(data[,1], type="additive")
 plot(datos.descom)
 
+ts.plot(datos.descom$x, datos.descom$trend,
+        plot.type = "single",
+        col       = 1:2,
+        lwd       = c(1,2),
+        xlab      = 'Periodo')
+
+legend("topright",
+       legend=c('Original','Tendencia'),
+       col=c(1,2),
+       lty=c(1,1))
+
+
 hist(datos.descom$random,main="Histograma de los residuos")
+
+
+
 
 
 # vemos que los residuos estan centrados en el 1 (buena señal), pero si cambiamos el modelo a aditivo estan centrados en el 0, de modo que no se que modelo corresponde.
 
 
 
-error <- data[,1]-datos.descom$seasonal*datos.descom$trend
+error <- data[,1]-datos.descom$seasonal-datos.descom$trend
 se    <- sd(error,na.rm=TRUE)
 
 plot(error,
@@ -109,12 +136,34 @@ abline(h = c(-3*se,-2*se,2*se,3*se),lty=2,lwd=2,
 
 
 layout(matrix(c(1,2), 1, 2, byrow = TRUE))
-plot(lag(as.vector(error)),error,pch=20,
-     xlab=expression(e[t]),ylab=expression(e[t+1]),
+plot(lag(error),error,
+     type ="p",
+     pch=20,
+     xlab=expression(e[t]),
+     ylab=expression(e[t+1]),
      main="Analisis incorrelación")
-plot(aggregate(error,FUN=sd),type="p",pch=20,
-     xlab='Periodo',ylab="Desviación estándar",
+
+plot(aggregate(error,FUN=sd),
+     type="p",
+     pch=20,
+     xlab='Periodo',
+     ylab="Desviación estándar",
      main="Analisis homocedasticidad")
 
 
-# Si ejecutas esto de nuevo con un modelo aditivo fliparas
+
+
+# Para hacer prediccion necesitas que el proceso sea ergodico (puntos lejanos -> poca varianza)
+# Tambien necesitas que sea estacionario en media  y varianza
+
+data.dif<-diff(data[,1],lag=1)
+plot(data.dif,main = "Serie diferenciada")
+
+# ahora parece que si es estacionaria en media
+
+# haremos un test para ver si es estacionaria en medias
+
+adf.test(data.dif)
+
+
+acf(diff(data[,4],diff=1),lag=100,main="ACF serie anual diferenciada")
